@@ -257,8 +257,8 @@ export default function App() {
       // Verifica se já tem nome salvo no celular
       const savedName = localStorage.getItem("sc_worker_name");
       if (savedName) {
-        // Revalida se ainda está cadastrado
-        const us = dbMode === "firebase" ? [] : (localGet("usuarios") || []);
+        // Revalida se ainda está na lista de usuários
+        const us = localGet("usuarios") || [];
         const ainda = us.length === 0 || us.some(u => u.nome.toLowerCase() === savedName.toLowerCase());
         if (!ainda) {
           localStorage.removeItem("sc_worker_name");
@@ -309,15 +309,7 @@ export default function App() {
 
   function handleName() {
     const nome = workerName.trim();
-    if (!nome) { setNameError("Informe seu nome completo"); return; }
-    // Valida se o usuário está cadastrado no sistema
-    if (usuarios.length > 0) {
-      const encontrado = usuarios.find(u => u.nome.toLowerCase() === nome.toLowerCase());
-      if (!encontrado) {
-        setNameError("Usuário não encontrado. Solicite seu cadastro ao gestor.");
-        return;
-      }
-    }
+    if (!nome) { setNameError("Selecione seu nome da lista"); return; }
     localStorage.setItem("sc_worker_name", nome);
     loadMyEntries(nome);
     setStep("form");
@@ -423,24 +415,40 @@ export default function App() {
       <div style={{ ...S.page, paddingTop: 48 }}>
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: C.red, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 10 }}>
-            SuperApontamento Equipe Técnica
+            Apontamento de Horas
           </div>
           <h1 style={S.h1}>Registro de<br />Horas Trabalhadas</h1>
-          <p style={{ ...S.muted, marginTop: 8 }}>Informe seu nome para iniciar o apontamento</p>
+          <p style={{ color: C.muted, fontSize: 14, marginTop: 6 }}>Selecione seu nome para iniciar o apontamento</p>
         </div>
         <div style={S.card}>
-          <label style={S.label}>Nome completo</label>
-          <input
-            style={{ ...S.input, borderColor: nameError ? C.red : C.border }}
-            placeholder="Ex: João Silva"
-            value={workerName}
-            onChange={e => { setWorkerName(e.target.value); setNameError(""); }}
-            onKeyDown={e => e.key === "Enter" && handleName()}
-          />
-          {nameError && <div style={{ color: C.red, fontSize: 12, marginTop: 6 }}>{nameError}</div>}
-          <button style={{ ...S.btn("primary"), width: "100%", marginTop: 16, padding: "14px" }} onClick={handleName}>
-            Continuar →
-          </button>
+          {usuarios.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
+              <div style={{ color: C.muted, fontSize: 14 }}>Nenhum colaborador cadastrado no sistema.</div>
+              <div style={{ color: C.faint, fontSize: 12, marginTop: 6 }}>Solicite seu cadastro ao gestor.</div>
+            </div>
+          ) : (
+            <>
+              <label style={S.label}>Selecione seu nome</label>
+              <select
+                style={{ ...S.select, borderColor: nameError ? C.red : C.border, marginBottom: 4 }}
+                value={workerName}
+                onChange={e => { setWorkerName(e.target.value); setNameError(""); }}
+              >
+                <option value="">— Selecione —</option>
+                {usuarios.sort((a,b) => a.nome.localeCompare(b.nome)).map(u => (
+                  <option key={u.id} value={u.nome}>{u.nome}</option>
+                ))}
+              </select>
+              {nameError && <div style={{ color: C.red, fontSize: 12, marginTop: 6, marginBottom: 4 }}>{nameError}</div>}
+              <p style={{ color: C.faint, fontSize: 11, marginBottom: 16 }}>
+                Não encontrou seu nome? Solicite cadastro ao gestor.
+              </p>
+              <button style={{ ...S.btn("primary"), width: "100%", padding: "14px" }} onClick={handleName}>
+                Continuar →
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -646,8 +654,8 @@ function Topbar({ dbMode, worker, onBack }) {
           <div style={S.logoIcon}>SC</div>
         )}
         <div>
-          <div style={S.logoText}>SuperApontamento Equipe Técnica</div>
-          {worker && <div style={S.logoSub}>{worker}</div>}
+          <div style={S.logoText}>SuperControl Automação Industrial</div>
+          <div style={S.logoSub}>{worker || "Apontamento de Horas"}</div>
         </div>
       </div>
       <div style={{ fontSize: 11, color: dbMode === "firebase" ? C.success : C.faint, fontWeight: 600 }}>
